@@ -3,30 +3,39 @@
         <h1>Spotify</h1>
 
         <div v-if="user" class="table">
-            <h1>Logged in as {{user.display_name}}</h1>
+            <h3>Logged in as:</h3>
             <div class="media">
                 <div class="pull-left">
-                    <img class="media-object" width="150" v-bind:src="user.images[0].url" />
+                    <img class="media-object img-circle" width="100" v-bind:src="user.images[0].url" />
                 </div>
                 <div class="media-body">
                     <dl class="dl-horizontal">
                         <dt>Display name</dt>
-                        <dd class="clearfix">{{user.display_name}}</dd>
-                        <dt>Id</dt>
-                        <dd>{{user.id}}</dd>
+                        <dd class="clearfix"><a v-bind:href="user.href">{{user.display_name}}</a></dd>
                         <dt>Email</dt>
                         <dd>{{user.email}}</dd>
-                        <dt>Spotify URI</dt>
-                        <dd><a v-bind:href="user.external_urls.spotify">{{user.external_urls.spotify}}</a></dd>
-                        <dt>Link</dt>
-                        <dd><a v-bind:href="user.href">{{user.href}}</a></dd>
-                        <dt>Profile Image</dt>
-                        <dd class="clearfix"><a v-bind:href="user.images[0].url">{{user.images[0].url}}</a></dd>
-                        <dt>Country</dt>
-                        <dd>{{user.country}}</dd>
                     </dl>
                 </div>
             </div>
+            <h3>Playlists:</h3>
+            <dl class="dl-horizontal" v-if="user.playlists.length">
+                <md-card v-for="playlist in user.playlists" v-bind:key="playlist.id.toUpperCase()">
+                    <md-card-media-cover md-text-scrim>
+                        <md-card-media md-ratio="16:9">
+                            <img v-bind:src="playlist.images[0].url" alt="Skyscraper">
+                        </md-card-media>
+                        <md-card-area>
+                            <md-card-header>
+                                <span class="md-title">{{playlist.name}}</span>
+                                <span class="md-subhead">{{playlist.tracks.total}} track(s)</span>
+                            </md-card-header>
+                            <md-card-actions>
+                                <md-button :href="playlist.external_urls.spotify" target="_blank">Open</md-button>
+                            </md-card-actions>
+                        </md-card-area>
+                    </md-card-media-cover>
+                </md-card>
+            </dl>
         </div>
         
         <p v-else-if="token">
@@ -42,3 +51,16 @@
 </template>
 
 <script src="./spotify.ts"></script>
+
+<style scoped>
+    .md-card {
+        width: 320px;
+        margin: 4px;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .md-card .md-title, .md-card .md-subhead {
+        text-shadow: 2px 2px #555;
+    }
+</style>

@@ -1,8 +1,10 @@
 ﻿import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
+import uuidv4 from 'uuid';
 
 @Component
 export default class SpotifyComponent extends Vue {
+    baseUrl = 'https://api.spotify.com';
     token: string = '';
     user: any = null;
 
@@ -17,7 +19,6 @@ export default class SpotifyComponent extends Vue {
                     [curr[0]]: curr[1]
                 }), {});
             this.token = hashParams['access_token'];
-            console.log(hashParams);
         } else if (this.$route.query && this.$route.query.error) {
             console.error(this.$route.query.error);
         }
@@ -31,16 +32,25 @@ export default class SpotifyComponent extends Vue {
                 mode: 'cors',
                 cache: 'default'
             };
-            fetch('https://api.spotify.com/v1/me', options)
+            fetch(`${this.baseUrl}/v1/me`, options)
                 .then(response => response.json())
-                .then(data => this.user = data);
+                .then(data => {
+                    this.user = data;
+                    this.user.playlists = [];
+                    fetch(`${this.baseUrl}/v1/me/playlists`, options)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.user.playlists.push(...data.items.filter(item => item.owner.id === this.user.id))
+                            this.user.playlists.sort((item1, item2) => item1.name.localeCompare(item2.name));
+                        });
+                });
         }
     }
-
-    onLoginClick() {
+    
+    onLoginClick(): void {
         var client_id = '7d1a7e52b28f4cb89abdb99e9e4405c2'; // Your client id
         var redirect_uri = 'http://localhost:58115/spotify'; // Your redirect uri
-        var state = this.generateRandomString(16);
+        var state = uuidv4();
         localStorage.setItem('spotify_auth_state', state);
         var scope = 'user-read-private user-read-email playlist-read-private playlist-modify-private playlist-modify-public';
         var url = 'https://accounts.spotify.com/authorize';
@@ -50,19 +60,5 @@ export default class SpotifyComponent extends Vue {
         url += '&redirect_uri=' + encodeURIComponent(redirect_uri);
         url += '&state=' + encodeURIComponent(state);
         window.location.href = url;
-    }
-
-    /**
-     * Generates a random string containing numbers and letters
-     * @param  {number} length The length of the string
-     * @return {string} The generated string
-     */
-    private generateRandomString(length) {
-        var text = '';
-        var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (var i = 0; i < length; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
     }
 }
